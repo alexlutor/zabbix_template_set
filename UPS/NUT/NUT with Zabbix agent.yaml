@@ -1,0 +1,291 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 3dcd5bbe90534f9e8eb5c2d53756af63
+      name: Templates/Power
+  templates:
+    - uuid: f770ba59f07d4359935672dbfd7bab87
+      template: 'NUT with Zabbix agent'
+      name: 'NUT with Zabbix agent'
+      description: 'Monitoring UPS with NUT. (Network UPS Tools - Welcome)'
+      groups:
+        - name: Templates/Power
+      discovery_rules:
+        - uuid: 8717e54e926944cb978d79fae4b4b1c7
+          name: LLD
+          key: 'nut.lld[lld]'
+          delay: 1h
+          description: 'LLD search UPS'
+          item_prototypes:
+            - uuid: 384910753dca4df1ada29c67253f36cd
+              name: '{#UPSNAME} Battery charge'
+              type: DEPENDENT
+              key: 'nut.ups.battery.charge[{#UPSNAME}]'
+              delay: '0'
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''battery.charge'']'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '101'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+              trigger_prototypes:
+                - uuid: e88ba85233e94ae4aeb7b7732af9056a
+                  expression: 'last(/NUT with Zabbix agent/nut.ups.battery.charge[{#UPSNAME}]) <= {$NUT.BATTERYWARN}'
+                  name: '{HOST.NAME} Low battery'
+                  opdata: 'Current charge: {$NUT.BATTERYWARN} %'
+                  priority: HIGH
+            - uuid: 20f476ed9fb0402585aa532d63d41c0e
+              name: '{#UPSNAME} Battery Voltage Nominal'
+              type: DEPENDENT
+              key: 'nut.ups.battery.voltage.nominal[{#UPSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: V
+              description: 'Voltage battery or packages'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''battery.voltage.nominal'']'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: 29a0eda0a7cb425586cad0981cca3805
+              name: '{#UPSNAME} Battery voltage'
+              type: DEPENDENT
+              key: 'nut.ups.battery.voltage[{#UPSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: V
+              description: 'Voltage battery or packages'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''battery.voltage'']'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '-1'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+              trigger_prototypes:
+                - uuid: bcf5e6254c914c57b94560f120ee76a7
+                  expression: 'avg(/NUT with Zabbix agent/nut.ups.battery.voltage[{#UPSNAME}],#5) < avg(/NUT with Zabbix agent/nut.ups.battery.voltage[{#UPSNAME}],#5:now-1d)'
+                  name: '{HOST.NAME} Battery charge decreases'
+                  opdata: 'Last voltage: {ITEM.LASTVALUE1}'
+                  priority: HIGH
+            - uuid: 005405a06f1e4d00a7dd3e8bb9f8a535
+              name: '{#UPSNAME} Input Frequency'
+              type: DEPENDENT
+              key: 'nut.ups.input.frequency[{#UPSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: Hz
+              description: 'Input frequency Hz'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''input.frequency'']'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '-1'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: b140fb82acac4212bf6bb494a175ef17
+              name: '{#UPSNAME} Input Voltage'
+              type: DEPENDENT
+              key: 'nut.ups.input.voltage[{#UPSNAME}]'
+              delay: '0'
+              units: V
+              description: 'Input voltage'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''input.voltage'']'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '-1'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '300'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: b6f14a7284c04a48b6d753240863aa76
+              name: '{#UPSNAME} UPS Load'
+              type: DEPENDENT
+              key: 'nut.ups.load[{#UPSNAME}]'
+              delay: '0'
+              units: '%'
+              description: 'Input voltage'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''ups.load'']'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: 7760b28df4ce4918afaa7854fd36768a
+              name: '{#UPSNAME} Input Frequency'
+              type: DEPENDENT
+              key: 'nut.ups.output.frequency[{#UPSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: Hz
+              description: 'Input frequency Hz'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''output.frequency'']'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '-1'
+                - type: IN_RANGE
+                  parameters:
+                    - '0'
+                    - '100'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: a6f8bf96a9ef490996f310da2a0559a1
+              name: '{#UPSNAME} UPS Serial'
+              type: DEPENDENT
+              key: 'nut.ups.serial[{#UPSNAME}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              description: 'Serial for {#UPSNAME}'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''ups.serial'']'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: 0c8d1373b3b845a98d23c4f3b9b68c13
+              name: '{#UPSNAME} UPS Status'
+              type: DEPENDENT
+              key: 'nut.ups.status[{#UPSNAME}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              description: 'Serial for {#UPSNAME}'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[''ups.status'']'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 5m
+              master_item:
+                key: 'nut.ups[{#UPSNAME}]'
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+            - uuid: fae88f4617e6432d9852823bbfc60413
+              name: '{#UPSNAME}: RAW Data'
+              key: 'nut.ups[{#UPSNAME}]'
+              history: '0'
+              value_type: TEXT
+              trends: '0'
+              timeout: 10s
+              tags:
+                - tag: Application
+                  value: nut
+                - tag: NUT
+                  value: '{#UPSNAME}'
+      macros:
+        - macro: '{$NUT.BATTERYVOLTAGENOMINAL}'
+          value: '72'
+          description: 'Nominal voltage'
+        - macro: '{$NUT.BATTERYWARN}'
+          value: '90'
+          description: 'UPS run of battry'
+        - macro: '{$NUT.TRANSFERVOLTAGEHIGH}'
+          value: '264'
+          description: 'High voltage transfered'
+        - macro: '{$NUT.TRANSFERVOLTAGELOW}'
+          value: '176'
+          description: 'Low voltage transfered'
+        - macro: '{$NUT.UPSLOADWARN}'
+          value: '60'
+          description: 'Warning load percent'
